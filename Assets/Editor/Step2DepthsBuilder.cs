@@ -40,7 +40,11 @@ public static class Step2DepthsBuilder
         if (gameplay == null || player == null || brazier == null) { Debug.LogError("[Depths] Сцена не схожа на Crypt."); return; }
 
         // 2. Прибираємо рівень 1: усе в Gameplay, крім чекпоінта; Notes; Environment
-        var keep = new HashSet<GameObject> { brazier };
+        // Лишаємо чекпоінт і набір головоломки (ящик, плита, решітка) — їх перенесемо в зал A і коридор
+        var crate = GameObject.Find("Crate_Pushable");
+        var plate = GameObject.Find("PressurePlate");
+        var portcullis = GameObject.Find("Portcullis_Crypt");
+        var keep = new HashSet<GameObject> { brazier, crate, plate, portcullis };
         foreach (var t in gameplay.transform.Cast<Transform>().ToList())
             if (!keep.Contains(t.gameObject)) Object.DestroyImmediate(t.gameObject);
         DestroyIfExists("Notes");
@@ -57,6 +61,7 @@ public static class Step2DepthsBuilder
         player.transform.SetPositionAndRotation(start.position, start.rotation);
 
         brazier.transform.SetPositionAndRotation(new Vector3(-4.6f, 0f, 4.6f), Quaternion.identity);
+        SetupPuzzle(crate, plate, portcullis);
         SpawnEnemies(gameplay.transform);
 
         // 5. NavMesh
@@ -154,6 +159,23 @@ public static class Step2DepthsBuilder
             WallZ("wall", 2f, z, corridor);
         }
         PutFacing("TorchWall", new Vector3(-1.5f, TorchY, zFirst + 2f), Vector3.right, corridor);
+    }
+
+    // Головоломка: ящик з зали A треба штовхнути на плиту — решітка в коридорі до зали B відчиниться
+    private static void SetupPuzzle(GameObject crate, GameObject plate, GameObject portcullis)
+    {
+        if (crate == null || plate == null || portcullis == null) { Debug.LogWarning("[Depths] Не знайдено ящик, плиту або решітку."); return; }
+        portcullis.name = "Portcullis_AB";
+        portcullis.transform.position = new Vector3(0f, 0f, 10f);
+        plate.transform.position = new Vector3(-3f, FloorY, 2.5f);
+        crate.transform.position = new Vector3(3f, FloorY, 2.5f);
+
+        var door = portcullis.GetComponent<Door>();
+        var pp = plate.GetComponent<PressurePlate>();
+        if (door == null || pp == null) { Debug.LogWarning("[Depths] На решітці немає Door або на плиті PressurePlate."); return; }
+        var so = new SerializedObject(pp);
+        so.FindProperty("door").objectReferenceValue = door;
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     // ---------------------------------------------------------------- СКЕЛЕТИ
