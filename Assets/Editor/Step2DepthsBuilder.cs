@@ -32,6 +32,7 @@ public static class Step2DepthsBuilder
         if (!AssetDatabase.CopyAsset(CryptScene, DepthsScene)) { Debug.LogError("[Depths] Не вдалося скопіювати сцену."); return; }
         var scene = EditorSceneManager.OpenScene(DepthsScene);
         Lightmapping.lightingDataAsset = null;      // запечене світло Crypt до Depths не підходить
+        StaticOcclusionCulling.Clear();             // і дані occlusion culling теж (інакше зникають стіни)
         cache.Clear();
 
         var gameplay = GameObject.Find("Gameplay");
@@ -74,6 +75,19 @@ public static class Step2DepthsBuilder
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("[Depths] Готово: сцена Depths створена й додана в Build Settings (індекс 2).");
+    }
+
+    // Depths був скопійований із Crypt і досі посилається на її дані occlusion culling — через це зникали стіни й підлога
+    [MenuItem("Tools/Crypt/Сюжет/2б-fix2. Прибрати occlusion Crypt з Depths")]
+    private static void FixDepthsOcclusion()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        var scene = EditorSceneManager.OpenScene(DepthsScene);
+        StaticOcclusionCulling.Clear();
+        Lightmapping.lightingDataAsset = null;
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("[Depths] Дані occlusion culling прибрано зі сцени Depths.");
     }
 
     // Підсуває тригер виходу в Crypt до самої брами (z 8..16, працює лише коли брама відкрита), щоб не залежати від підйому сходами
