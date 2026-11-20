@@ -11,6 +11,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/Scenes/Crypt.unity
     guid: 1abc502b03b5eab47a026c3ff99a151b
+  - enabled: 1
+    path: Assets/_Project/Scenes/Depths.unity
+    guid: 7c10e05b806aa6a41ac590750cce2be3
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

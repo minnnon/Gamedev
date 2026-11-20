@@ -9,6 +9,7 @@ public class ExitZone : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (other.GetComponentInParent<PlayerController>() == null) return;
+        Debug.Log("[Exit] Гравець зайшов у зону виходу");
         if (GameManager.Instance == null) return;
         if (string.IsNullOrEmpty(nextScene)) GameManager.Instance.Win();
         else GameManager.Instance.NextLevel(nextScene);
