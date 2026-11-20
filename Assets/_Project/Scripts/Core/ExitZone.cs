@@ -9,6 +9,8 @@ public class ExitZone : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (other.GetComponentInParent<PlayerController>() == null) return;
+        var gate = FindFirstObjectByType<RuneGate>();
+        if (gate != null && !gate.IsOpen) return;     // поки брама зачинена — вихід не працює
         Debug.Log("[Exit] Гравець зайшов у зону виходу");
         if (GameManager.Instance == null) return;
         if (string.IsNullOrEmpty(nextScene)) GameManager.Instance.Win();

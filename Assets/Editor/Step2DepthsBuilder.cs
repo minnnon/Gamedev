@@ -71,7 +71,7 @@ public static class Step2DepthsBuilder
         Debug.Log("[Depths] Готово: сцена Depths створена й додана в Build Settings (індекс 2).");
     }
 
-    // Підсуває тригер виходу в Crypt до самої брами (z 10.5..16.5), щоб не залежати від підйому сходами
+    // Підсуває тригер виходу в Crypt до самої брами (z 8..16, працює лише коли брама відкрита), щоб не залежати від підйому сходами
     [MenuItem("Tools/Crypt/Сюжет/2б-fix. Тригер виходу в Crypt")]
     private static void FixExitZone()
     {
@@ -81,8 +81,8 @@ public static class Step2DepthsBuilder
         var box = zone != null ? zone.GetComponent<BoxCollider>() : null;
         if (box == null) { Debug.LogError("[Depths] Не знайдено ExitZone у Crypt."); return; }
         Undo.RecordObject(box, "ExitZone");
-        box.center = new Vector3(0f, 0f, -0.5f);
-        box.size = new Vector3(5f, 8f, 6f);
+        box.center = new Vector3(0f, 0f, -2f);
+        box.size = new Vector3(5f, 8f, 8f);
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("[Depths] Тригер виходу розширено до брами, сцену Crypt збережено.");
