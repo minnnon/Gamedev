@@ -24,6 +24,7 @@ public class SaveData
 {
     public int version = 1;
     public string savedAt;
+    public string scene;     // у якій сцені збережено (Crypt, Depths)
     public float playTime;
 
     // Гравець

@@ -96,6 +96,7 @@ public class GameManager : MonoBehaviour
             LoadRequested = false;
             StartCoroutine(ApplyLoadNextFrame());
         }
+        else StartCoroutine(ApplyStashNextFrame());
     }
 
     // Чекаємо кадр, щоб усі Start() у сцені встигли відпрацювати, і лише тоді накладаємо збереження
@@ -103,6 +104,12 @@ public class GameManager : MonoBehaviour
     {
         yield return null;
         SaveSystem.Load();
+    }
+
+    private IEnumerator ApplyStashNextFrame()
+    {
+        yield return null;
+        SaveSystem.ApplyStash();
     }
 
     private void OnPlayerDied()
@@ -186,7 +193,22 @@ public class GameManager : MonoBehaviour
     {
         if (!SaveSystem.HasSave) return;
         LoadRequested = true;
-        SceneManager.LoadScene(GameScene);
+        SceneManager.LoadScene(SaveSystem.ReadScene());     // Crypt або Depths — де збереглись
+    }
+
+    // Перехід на наступний рівень: гравець іде з тим, що в нього є
+    public void NextLevel(string sceneName)
+    {
+        if (State != GameState.Playing) return;
+        if (!Application.CanStreamedLevelBeLoaded(sceneName))
+        {
+            Debug.LogWarning($"[Game] Сцени {sceneName} немає в Build Settings — перемога.");
+            Win();
+            return;
+        }
+        SaveSystem.StashPlayer();
+        LoadRequested = false;
+        SceneManager.LoadScene(sceneName);
     }
 
     public void ToMenu()

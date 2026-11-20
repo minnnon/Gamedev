@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // Збереження й завантаження прогресу в один JSON-файл у Application.persistentDataPath.
 public static class SaveSystem
@@ -27,6 +28,59 @@ public static class SaveSystem
     public static void MarkDead(Transform enemy) { dead.Add(IdOf(enemy)); }
     public static void ClearRuntime() { dead.Clear(); }
 
+    // Назва сцени з файлу збереження (старі збереження без поля — це Crypt)
+    public static string ReadScene()
+    {
+        if (!HasSave) return GameManager.GameScene;
+        try
+        {
+            var data = JsonUtility.FromJson<SaveData>(File.ReadAllText(FilePath));
+            return string.IsNullOrEmpty(data.scene) ? GameManager.GameScene : data.scene;
+        }
+        catch { return GameManager.GameScene; }
+    }
+
+    // Перехід між рівнями: запам'ятовуємо здоров'я, предмети й час, у новій сцені відновлюємо
+    private static SaveData stash;
+
+    public static void StashPlayer()
+    {
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) { stash = null; return; }
+        stash = new SaveData { playTime = GameManager.Instance != null ? GameManager.Instance.PlayTime : 0f };
+        var health = player.GetComponent<Health>();
+        if (health != null) stash.health = health.Current;
+        var inventory = player.GetComponent<Inventory>();
+        if (inventory != null)
+            foreach (var s in inventory.Slots)
+                if (s.item != null) stash.items.Add(new ItemEntry { item = s.item.name, count = s.count });
+    }
+
+    public static void ApplyStash()
+    {
+        if (stash == null) return;
+        var data = stash;
+        stash = null;
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return;
+
+        var health = player.GetComponent<Health>();
+        if (health != null && data.health > 0) health.SetCurrent(data.health);
+        var inventory = player.GetComponent<Inventory>();
+        var db = ItemDatabase.Get();
+        if (inventory != null && db != null)
+        {
+            inventory.Clear();
+            foreach (var e in data.items)
+            {
+                var item = db.Find(e.item);
+                if (item != null) inventory.Add(item, e.count);
+            }
+        }
+        if (GameManager.Instance != null) GameManager.Instance.PlayTime = data.playTime;
+        Debug.Log("[Save] Стан гравця перенесено на новий рівень");
+    }
+
     public static string ReadInfo()
     {
         if (!HasSave) return "";
@@ -46,6 +100,7 @@ public static class SaveSystem
         var data = new SaveData
         {
             savedAt = DateTime.Now.ToString("dd.MM.yyyy HH:mm"),
+            scene = SceneManager.GetActiveScene().name,
             playTime = GameManager.Instance != null ? GameManager.Instance.PlayTime : 0f,
             position = player.transform.position,
             yaw = player.transform.eulerAngles.y
