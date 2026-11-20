@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-public enum GameState { Menu, Playing, Paused, GameOver, Win }
+public enum GameState { Menu, Playing, Paused, GameOver, Win, Reading }
 
 // Керує станами гри (меню, гра, пауза, програш, перемога), паузою через Time.timeScale,
 // курсором і завантаженням сцен. Один екземпляр на всю програму (Singleton + DontDestroyOnLoad).
@@ -20,6 +20,10 @@ public class GameManager : MonoBehaviour
 
     // Меню виставляє true для "Продовжити": після завантаження сцени застосується збереження
     public static bool LoadRequested;
+
+    // "Нова гра" виставляє true: у сцені гри спершу показується вступ
+    public static bool ShowIntro;
+    public const string IntroText = "Під нашим селом є старий склеп. Тиждень тому зник сторож Гнат, а ночами біля цвинтаря бачать кістяків. Староста заплатив, щоб я спустився і розібрався. Гроші вперед. Назад — як вийде.";
 
     public GameState State { get; private set; } = GameState.Menu;
     public float PlayTime { get; set; }
@@ -56,7 +60,7 @@ public class GameManager : MonoBehaviour
         if (State == GameState.Playing) PlayTime += Time.deltaTime;
 
         var kb = Keyboard.current;
-        if (kb != null && kb.escapeKey.wasPressedThisFrame)
+        if (kb != null && kb.escapeKey.wasPressedThisFrame && NoteUI.LastCloseFrame != Time.frameCount)
         {
             if (State == GameState.Playing) Pause();
             else if (State == GameState.Paused) Resume();
@@ -121,6 +125,10 @@ public class GameManager : MonoBehaviour
                 Time.timeScale = 1f;
                 SetCursor(false);
                 break;
+            case GameState.Reading:     // читаємо записку: час стоїть, курсор лишається захопленим
+                Time.timeScale = 0f;
+                SetCursor(false);
+                break;
             case GameState.Paused:
             case GameState.Win:
                 Time.timeScale = 0f;
@@ -148,6 +156,15 @@ public class GameManager : MonoBehaviour
     public void Pause() { if (State == GameState.Playing) SetState(GameState.Paused); }
     public void Resume() { if (State == GameState.Paused) SetState(GameState.Playing); }
 
+    public bool StartReading()
+    {
+        if (State != GameState.Playing) return false;
+        SetState(GameState.Reading);
+        return true;
+    }
+
+    public void StopReading() { if (State == GameState.Reading) SetState(GameState.Playing); }
+
     public void Win() { if (State == GameState.Playing) SetState(GameState.Win); }
 
     // "Спробувати знову": відродження біля останнього вогнища, світ лишається як є
@@ -161,6 +178,7 @@ public class GameManager : MonoBehaviour
     public void NewGame()
     {
         LoadRequested = false;
+        ShowIntro = true;
         SceneManager.LoadScene(GameScene);
     }
 

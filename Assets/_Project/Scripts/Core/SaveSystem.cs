@@ -68,6 +68,8 @@ public static class SaveSystem
             if (c.IsOpen) data.openChests.Add(IdOf(c.transform));
         foreach (var s in UnityEngine.Object.FindObjectsByType<RuneSocket>(FindObjectsSortMode.None))
             if (s.IsFilled) data.filledSockets.Add(IdOf(s.transform));
+        foreach (var n in UnityEngine.Object.FindObjectsByType<Note>(FindObjectsSortMode.None))
+            if (n.IsRead) data.readNotes.Add(IdOf(n.transform));
         data.deadEnemies.AddRange(dead);
         foreach (var p in UnityEngine.Object.FindObjectsByType<Pickup>(FindObjectsSortMode.None))
             if (p.Item != null) data.pickups.Add(new PickupEntry { item = p.Item.name, amount = p.Amount, position = p.transform.position });
@@ -132,6 +134,9 @@ public static class SaveSystem
             if (data.openChests.Contains(IdOf(c.transform))) c.Restore();
         foreach (var s in UnityEngine.Object.FindObjectsByType<RuneSocket>(FindObjectsSortMode.None))
             if (data.filledSockets.Contains(IdOf(s.transform))) s.Restore();
+
+        foreach (var n in UnityEngine.Object.FindObjectsByType<Note>(FindObjectsSortMode.None))
+            if (data.readNotes.Contains(IdOf(n.transform))) n.Restore();
 
         dead.Clear();
         dead.UnionWith(data.deadEnemies);

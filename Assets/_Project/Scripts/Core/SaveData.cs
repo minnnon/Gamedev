@@ -38,6 +38,7 @@ public class SaveData
     public List<string> openDoors = new List<string>();
     public List<string> openChests = new List<string>();
     public List<string> filledSockets = new List<string>();
+    public List<string> readNotes = new List<string>();
     public List<string> deadEnemies = new List<string>();
     public List<PickupEntry> pickups = new List<PickupEntry>();
 }
