@@ -123,7 +123,7 @@ public static class Step5CeilingBuilder
         var fill = new GameObject("Fill").transform;
         fill.SetParent(parent, false);
 
-        Bounds b = Bounds(stairs.gameObject);
+        Bounds b = WorldBounds(stairs.gameObject);
         float depth = -b.min.y;
         // Проміжні ряди між y=0 і y=-depth (крайні вже стоять з кроку 3а)
         for (float y = -wallH; y > -depth + 0.05f; y -= wallH)
@@ -192,7 +192,7 @@ public static class Step5CeilingBuilder
         var src = AssetDatabase.LoadAssetAtPath<GameObject>(Proj + "/Prefabs/Level/wall.prefab");
         if (src == null) return 4f;
         var tmp = (GameObject)PrefabUtility.InstantiatePrefab(src);
-        float h = Bounds(tmp).size.y;
+        float h = WorldBounds(tmp).size.y;
         Object.DestroyImmediate(tmp);
         return h > 1f ? h : 4f;
     }
@@ -245,7 +245,7 @@ public static class Step5CeilingBuilder
         return go;
     }
 
-    private static Bounds Bounds(GameObject go)
+    private static Bounds WorldBounds(GameObject go)
     {
         var rs = go.GetComponentsInChildren<Renderer>();
         if (rs.Length == 0) return new Bounds(go.transform.position, Vector3.zero);
