@@ -26,10 +26,10 @@ public class GameManager : MonoBehaviour
 
     // Після переходу між рівнями нова сцена починається з чорного екрана
     public static bool FadeInPending;
-    public const string IntroText = "Під нашим селом є старий склеп. Тиждень тому зник сторож Гнат, а ночами біля цвинтаря бачать кістяків. Староста заплатив, щоб я спустився і розібрався. Гроші вперед. Назад — як вийде.";
 
     public GameState State { get; private set; } = GameState.Menu;
     public float PlayTime { get; set; }
+    public int Deaths { get; set; }     // скільки разів гравець помирав за проходження (для екрана перемоги)
     public event Action<GameState> StateChanged;
 
     private PlayerRespawn respawn;
@@ -117,6 +117,7 @@ public class GameManager : MonoBehaviour
 
     private void OnPlayerDied()
     {
+        Deaths++;
         StartCoroutine(GameOverRoutine());
     }
 
@@ -189,6 +190,7 @@ public class GameManager : MonoBehaviour
     {
         LoadRequested = false;
         ShowIntro = true;
+        Deaths = 0;
         SceneManager.LoadScene(GameScene);
     }
 

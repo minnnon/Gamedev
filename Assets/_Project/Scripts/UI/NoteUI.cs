@@ -34,16 +34,6 @@ public class NoteUI : MonoBehaviour
         }
     }
 
-    private void Start()
-    {
-        // Вступ показуємо лише після "Нової гри" з меню
-        if (GameManager.ShowIntro)
-        {
-            GameManager.ShowIntro = false;
-            Open("", GameManager.IntroText, "Натисни будь-яку клавішу", true);
-        }
-    }
-
     // Затемнення екрана, потім done (наприклад, завантаження сцени). Якщо екрана нема — done одразу.
     public static void FadeOut(float seconds, Action done)
     {

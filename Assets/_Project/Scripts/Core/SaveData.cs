@@ -26,6 +26,7 @@ public class SaveData
     public string savedAt;
     public string scene;     // у якій сцені збережено (Crypt, Depths)
     public float playTime;
+    public int deaths;
 
     // Гравець
     public Vector3 position;

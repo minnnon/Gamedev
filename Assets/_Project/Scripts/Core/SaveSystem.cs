@@ -47,7 +47,11 @@ public static class SaveSystem
     {
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player == null) { stash = null; return; }
-        stash = new SaveData { playTime = GameManager.Instance != null ? GameManager.Instance.PlayTime : 0f };
+        stash = new SaveData
+        {
+            playTime = GameManager.Instance != null ? GameManager.Instance.PlayTime : 0f,
+            deaths = GameManager.Instance != null ? GameManager.Instance.Deaths : 0
+        };
         var health = player.GetComponent<Health>();
         if (health != null) stash.health = health.Current;
         var inventory = player.GetComponent<Inventory>();
@@ -77,7 +81,7 @@ public static class SaveSystem
                 if (item != null) inventory.Add(item, e.count);
             }
         }
-        if (GameManager.Instance != null) GameManager.Instance.PlayTime = data.playTime;
+        if (GameManager.Instance != null) { GameManager.Instance.PlayTime = data.playTime; GameManager.Instance.Deaths = data.deaths; }
         Debug.Log("[Save] Стан гравця перенесено на новий рівень");
     }
 
@@ -102,6 +106,7 @@ public static class SaveSystem
             savedAt = DateTime.Now.ToString("dd.MM.yyyy HH:mm"),
             scene = SceneManager.GetActiveScene().name,
             playTime = GameManager.Instance != null ? GameManager.Instance.PlayTime : 0f,
+            deaths = GameManager.Instance != null ? GameManager.Instance.Deaths : 0,
             position = player.transform.position,
             yaw = player.transform.eulerAngles.y
         };
@@ -216,7 +221,7 @@ public static class SaveSystem
             if (pickup != null) pickup.Setup(item, pe.amount);
         }
 
-        if (GameManager.Instance != null) GameManager.Instance.PlayTime = data.playTime;
+        if (GameManager.Instance != null) { GameManager.Instance.PlayTime = data.playTime; GameManager.Instance.Deaths = data.deaths; }
         Debug.Log("[Save] Збереження завантажено: " + data.savedAt);
         HUD.ShowMessage("Прогрес завантажено");
         return true;

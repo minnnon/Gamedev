@@ -51,6 +51,7 @@ public class UIManager : MonoBehaviour
     public void Resume() { Click(); GameManager.Instance.Resume(); }
     public void Retry() { Click(); GameManager.Instance.Retry(); }
     public void LoadLast() { Click(); GameManager.Instance.ContinueGame(); }
+    public void NewGame() { Click(); GameManager.Instance.NewGame(); }
     public void ToMenu() { Click(); GameManager.Instance.ToMenu(); }
     public void QuitGame() { Click(); GameManager.Instance.Quit(); }
 
