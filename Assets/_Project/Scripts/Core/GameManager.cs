@@ -23,6 +23,9 @@ public class GameManager : MonoBehaviour
 
     // "Нова гра" виставляє true: у сцені гри спершу показується вступ
     public static bool ShowIntro;
+
+    // Після переходу між рівнями нова сцена починається з чорного екрана
+    public static bool FadeInPending;
     public const string IntroText = "Під нашим селом є старий склеп. Тиждень тому зник сторож Гнат, а ночами біля цвинтаря бачать кістяків. Староста заплатив, щоб я спустився і розібрався. Гроші вперед. Назад — як вийде.";
 
     public GameState State { get; private set; } = GameState.Menu;
@@ -206,9 +209,14 @@ public class GameManager : MonoBehaviour
             Win();
             return;
         }
-        SaveSystem.StashPlayer();
-        LoadRequested = false;
-        SceneManager.LoadScene(sceneName);
+        if (!StartReading()) return;     // гравець завмирає на час затемнення
+        NoteUI.FadeOut(0.8f, () =>
+        {
+            SaveSystem.StashPlayer();
+            LoadRequested = false;
+            FadeInPending = true;
+            SceneManager.LoadScene(sceneName);
+        });
     }
 
     public void ToMenu()

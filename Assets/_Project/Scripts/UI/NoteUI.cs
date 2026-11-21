@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -14,6 +15,7 @@ public class NoteUI : MonoBehaviour
     [SerializeField] private Text titleText;
     [SerializeField] private Text bodyText;
     [SerializeField] private Text hintText;
+    [SerializeField] private Image fadeImage;     // чорний екран на весь Canvas для переходів між сценами
 
     private bool anyKeyClose;
     private Action onClose;
@@ -23,6 +25,13 @@ public class NoteUI : MonoBehaviour
     {
         Instance = this;
         if (panel != null) panel.SetActive(false);
+        // Прийшли з іншого рівня: починаємо з чорного екрана і плавно світлішаємо
+        if (GameManager.FadeInPending && fadeImage != null)
+        {
+            GameManager.FadeInPending = false;
+            SetFade(1f);
+            StartCoroutine(Fade(1f, 0f, 0.8f, null));
+        }
     }
 
     private void Start()
@@ -33,6 +42,29 @@ public class NoteUI : MonoBehaviour
             GameManager.ShowIntro = false;
             Open("", GameManager.IntroText, "Натисни будь-яку клавішу", true);
         }
+    }
+
+    // Затемнення екрана, потім done (наприклад, завантаження сцени). Якщо екрана нема — done одразу.
+    public static void FadeOut(float seconds, Action done)
+    {
+        if (Instance == null || Instance.fadeImage == null) { done?.Invoke(); return; }
+        Instance.StartCoroutine(Instance.Fade(0f, 1f, seconds, done));
+    }
+
+    private IEnumerator Fade(float from, float to, float seconds, Action done)
+    {
+        for (float t = 0f; t < seconds; t += Time.unscaledDeltaTime)
+        {
+            SetFade(Mathf.Lerp(from, to, t / seconds));
+            yield return null;
+        }
+        SetFade(to);
+        done?.Invoke();
+    }
+
+    private void SetFade(float a)
+    {
+        var c = fadeImage.color; c.a = a; fadeImage.color = c;
     }
 
     private void OnDestroy() { if (Instance == this) Instance = null; }
