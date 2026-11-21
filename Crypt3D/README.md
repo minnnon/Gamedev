@@ -105,3 +105,4 @@ Docs/              Story.md (сюжет і тексти), TestPlan.md (тест-
 
 ## Автор
 
+minnnon
