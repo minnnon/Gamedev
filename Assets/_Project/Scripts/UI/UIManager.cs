@@ -43,7 +43,8 @@ public class UIManager : MonoBehaviour
             var player = GameObject.FindGameObjectWithTag("Player");
             var inv = player != null ? player.GetComponent<Inventory>() : null;
             int coins = inv != null ? inv.CountOfType(ItemType.Coin) : 0;
-            winStats.text = $"Час: {(int)(t / 60f):00}:{(int)(t % 60f):00}\nМонети: {coins}";
+            int attempts = GameManager.Instance.Deaths + 1;
+            winStats.text = $"Час: {(int)(t / 60f):00}:{(int)(t % 60f):00}\nСпроб: {attempts}\nМонети: {coins}";
         }
     }
 

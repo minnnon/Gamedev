@@ -6,7 +6,7 @@ using UnityEngine.UI;
 // Вступні кадри при "Новій грі": картинка + підпис, далі будь-яка клавіша. Після останнього — гра.
 public class IntroUI : MonoBehaviour
 {
-    [SerializeField] private GameObject root;
+    [SerializeField] private GameObject root;     // панель з візуалом (дочірня; сам компонент завжди активний)
     [SerializeField] private CanvasGroup slide;
     [SerializeField] private Image picture;
     [SerializeField] private Text caption;

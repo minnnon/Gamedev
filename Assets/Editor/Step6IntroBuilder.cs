@@ -53,9 +53,14 @@ public static class Step6IntroBuilder
         if (old != null) Object.DestroyImmediate(old.gameObject);
         var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
-        var root = new GameObject("IntroUI", typeof(RectTransform));
-        Undo.RegisterCreatedObjectUndo(root, "IntroUI");
-        root.transform.SetParent(canvas.transform, false);
+        // Хост (завжди активний, тримає скрипт) і дочірня панель із візуалом, яку скрипт вмикає й вимикає
+        var host = new GameObject("IntroUI", typeof(RectTransform));
+        Undo.RegisterCreatedObjectUndo(host, "IntroUI");
+        host.transform.SetParent(canvas.transform, false);
+        Stretch(host.GetComponent<RectTransform>());
+
+        var root = new GameObject("Panel", typeof(RectTransform));
+        root.transform.SetParent(host.transform, false);
         Stretch(root.GetComponent<RectTransform>());
         var bg = root.AddComponent<Image>();
         bg.color = Color.black;                 // чорний фон, блокує кліки
@@ -80,7 +85,7 @@ public static class Step6IntroBuilder
         var hint = MakeText(slide.transform, font, "Hint", 26, TextAnchor.MiddleCenter, new Color(0.65f, 0.65f, 0.65f));
         Anchor(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 50f), new Vector2(1200f, 50f));
 
-        var ui = root.AddComponent<IntroUI>();
+        var ui = host.AddComponent<IntroUI>();
         var so = new SerializedObject(ui);
         so.FindProperty("root").objectReferenceValue = root;
         so.FindProperty("slide").objectReferenceValue = slide.GetComponent<CanvasGroup>();
@@ -97,7 +102,7 @@ public static class Step6IntroBuilder
         so.ApplyModifiedPropertiesWithoutUndo();
 
         // Поверх HUD і записок, але під затемненням переходу (воно в NoteUI, що вище)
-        root.transform.SetAsLastSibling();
+        host.transform.SetAsLastSibling();
         var note = canvas.transform.Find("NoteUI");
         if (note != null) note.SetAsLastSibling();
     }
