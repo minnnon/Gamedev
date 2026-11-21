@@ -13,6 +13,9 @@ public static class Step5CeilingBuilder
     private const string Proj = "Assets/_Project";
     private static readonly string[] Scenes = { Proj + "/Scenes/Crypt.unity", Proj + "/Scenes/Depths.unity" };
 
+    private const float CeilingY = 6.5f;      // низ стелі: достатньо для стрибка і камери (стіни в 4 м надбудовуються)
+    private const float ChainLength = 2.2f;
+
     private static Material stone, wood, metal;
 
     [MenuItem("Tools/Crypt/Сюжет/5. Стеля 2.0, шахта, завал, камера")]
@@ -34,18 +37,19 @@ public static class Step5CeilingBuilder
             if (old != null) Object.DestroyImmediate(old);
 
             float wallH = WallHeight();
-            float ceilY = LowestWallTop(env.transform) - 0.05f;     // нижче найнижчої стіни: щілин між стіною і стелею нема
+            float ceilY = CeilingY;
             var root = new GameObject("Ceiling");
             Undo.RegisterCreatedObjectUndo(root, "Ceiling");
 
             int tiles = BuildCeiling(env.transform, root.transform, ceilY);
             if (scene.name == "Crypt") BuildShaftTop(root.transform, wallH, ceilY);
             if (scene.name == "Depths") ReplaceStairsWithRubble();
+            int ext = ExtendWalls(env.transform, root.transform, ceilY, wallH);
             SetCamera();
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log($"[Стеля] {scene.name}: плиток {tiles}, низ стелі y={ceilY:0.00}, висота стіни {wallH:0.00}.");
+            Debug.Log($"[Стеля] {scene.name}: плиток {tiles}, надбудов стін {ext}, низ стелі y={ceilY:0.00}, висота стіни {wallH:0.00}.");
         }
     }
 
@@ -83,8 +87,8 @@ public static class Step5CeilingBuilder
         switch (hash % 5)
         {
             case 0:     // ланцюг зі свічками
-                Cube(root, "Chain", metal, bottomCenter + Vector3.down * 0.55f, new Vector3(0.04f, 0.9f, 0.04f), false);
-                var plate = Cylinder(root, "Plate", metal, bottomCenter + Vector3.down * 1.02f, new Vector3(0.7f, 0.03f, 0.7f));
+                Cube(root, "Chain", metal, bottomCenter + Vector3.down * (ChainLength / 2f), new Vector3(0.04f, ChainLength, 0.04f), false);
+                var plate = Cylinder(root, "Plate", metal, bottomCenter + Vector3.down * ChainLength, new Vector3(0.7f, 0.03f, 0.7f));
                 var candle = AssetDatabase.LoadAssetAtPath<GameObject>(Proj + "/Prefabs/Props/candle_triple.prefab");
                 if (candle != null)
                 {
@@ -107,6 +111,50 @@ public static class Step5CeilingBuilder
         go.transform.rotation = Quaternion.Euler(0f, 45f, 0f);
         // Звужуємо до низу: другий, коротший і тонший куб під ним
         Cube(root, "StalactiteTip", stone, top + Vector3.down * length * 0.75f, new Vector3(0.1f, length * 0.5f, 0.1f), false).transform.rotation = Quaternion.Euler(0f, 45f, 0f);
+    }
+
+    // Над кожною стіною ставимо такі самі блоки, доки верх не дійде до стелі; стовпи добудовуємо колонами
+    private static int ExtendWalls(Transform env, Transform ceiling, float ceilY, float wallH)
+    {
+        var src = AssetDatabase.LoadAssetAtPath<GameObject>(Proj + "/Prefabs/Level/wall.prefab");
+        if (src == null) return 0;
+        var ext = new GameObject("WallExtensions").transform;
+        ext.SetParent(ceiling, false);
+
+        int n = 0;
+        foreach (var t in env.GetComponentsInChildren<Transform>().ToList())
+        {
+            bool isWall = t.name.StartsWith("wall");
+            bool isPillar = t.name.StartsWith("pillar") || t.name.StartsWith("column");
+            if (!isWall && !isPillar) continue;
+            if (t.parent != null && (t.parent.name.StartsWith("wall") || t.parent.name.StartsWith("pillar") || t.parent.name.StartsWith("column"))) continue;
+            var rs = t.GetComponentsInChildren<Renderer>();
+            if (rs.Length == 0) continue;
+            Bounds b = rs[0].bounds;
+            foreach (var r in rs) b.Encapsulate(r.bounds);
+            float top = b.max.y;
+
+            if (isPillar)
+            {
+                if (top < ceilY - 0.05f)
+                {
+                    float h = ceilY - top + 0.3f;
+                    var cap = Cube(ext, "PillarCap", stone, new Vector3(b.center.x, top + h / 2f, b.center.z), new Vector3(Mathf.Max(0.9f, b.size.x), h, Mathf.Max(0.9f, b.size.z)), false);
+                    GameObjectUtility.SetStaticEditorFlags(cap, 0);
+                    n++;
+                }
+                continue;
+            }
+
+            for (int i = 0; i < 4 && top < ceilY - 0.05f; i++)
+            {
+                var w = (GameObject)PrefabUtility.InstantiatePrefab(src, ext);
+                w.transform.SetPositionAndRotation(new Vector3(t.position.x, top, t.position.z), t.rotation);
+                top += wallH;
+                n++;
+            }
+        }
+        return n;
     }
 
     // ------------------------------------------------------------ Шахта-спуск у Crypt
