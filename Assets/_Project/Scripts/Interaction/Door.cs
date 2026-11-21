@@ -18,6 +18,7 @@ public class Door : MonoBehaviour
     private Vector3 openPosition;
     private Quaternion closedRotation;
     private Quaternion openRotation;
+    private Collider[] colliders;
 
     public bool IsOpen { get; private set; }
 
@@ -27,7 +28,9 @@ public class Door : MonoBehaviour
         openPosition = closedPosition + openOffset;
         closedRotation = transform.localRotation;
         openRotation = closedRotation * Quaternion.Euler(openEuler);
+        colliders = GetComponentsInChildren<Collider>(true);
         IsOpen = startOpen;
+        UpdateColliders();
         if (IsOpen)
         {
             transform.position = openPosition;
@@ -42,7 +45,16 @@ public class Door : MonoBehaviour
     {
         if (IsOpen == open) return;
         IsOpen = open;
+        UpdateColliders();
         Debug.Log($"[Door] {name}: " + (open ? "відчиняється" : "зачиняється"));
+    }
+
+    // Відчинені двері не мають заважати проходу (стулка могла перекривати проріз): колайдери вимкнені, поки двері відчинені.
+    // При зачиненні вмикаються одразу — стулка виштовхує того, хто стоїть у прорізі.
+    private void UpdateColliders()
+    {
+        if (colliders == null) return;
+        foreach (var c in colliders) if (c != null) c.enabled = !IsOpen;
     }
 
     private void Update()
