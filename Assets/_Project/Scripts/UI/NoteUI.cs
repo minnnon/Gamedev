@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -15,6 +16,7 @@ public class NoteUI : MonoBehaviour
     [SerializeField] private Text hintText;
 
     private bool anyKeyClose;
+    private Action onClose;
     private int openFrame = -1;
 
     private void Awake()
@@ -35,15 +37,17 @@ public class NoteUI : MonoBehaviour
 
     private void OnDestroy() { if (Instance == this) Instance = null; }
 
-    public static bool Show(string title, string body)
+    // onClose — що зробити, коли гравець закрив панель (наприклад, показати перемогу)
+    public static bool Show(string title, string body, Action onClose = null)
     {
         if (Instance == null || LastCloseFrame == Time.frameCount) return false;
-        return Instance.Open(title, body, "E / Esc — закрити", false);
+        return Instance.Open(title, body, "E / Esc — закрити", false, onClose);
     }
 
-    private bool Open(string title, string body, string hint, bool anyKey)
+    private bool Open(string title, string body, string hint, bool anyKey, Action closeAction = null)
     {
         if (GameManager.Instance == null || !GameManager.Instance.StartReading()) return false;
+        onClose = closeAction;
         titleText.text = title;
         bodyText.text = body;
         hintText.text = hint;
@@ -68,5 +72,8 @@ public class NoteUI : MonoBehaviour
         panel.SetActive(false);
         LastCloseFrame = Time.frameCount;
         GameManager.Instance.StopReading();
+        var callback = onClose;
+        onClose = null;
+        callback?.Invoke();
     }
 }

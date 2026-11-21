@@ -123,6 +123,8 @@ public static class SaveSystem
             if (c.IsOpen) data.openChests.Add(IdOf(c.transform));
         foreach (var s in UnityEngine.Object.FindObjectsByType<RuneSocket>(FindObjectsSortMode.None))
             if (s.IsFilled) data.filledSockets.Add(IdOf(s.transform));
+        foreach (var t in UnityEngine.Object.FindObjectsByType<Tomb>(FindObjectsSortMode.None))
+            if (t.IsUsed) data.usedTombs.Add(IdOf(t.transform));
         foreach (var n in UnityEngine.Object.FindObjectsByType<Note>(FindObjectsSortMode.None))
             if (n.IsRead) data.readNotes.Add(IdOf(n.transform));
         data.deadEnemies.AddRange(dead);
@@ -192,6 +194,10 @@ public static class SaveSystem
 
         foreach (var n in UnityEngine.Object.FindObjectsByType<Note>(FindObjectsSortMode.None))
             if (data.readNotes.Contains(IdOf(n.transform))) n.Restore();
+
+        // Гробниця відновлюється до перевірки мертвих: вона вмикає боса, а потім він може виявитись убитим
+        foreach (var t in UnityEngine.Object.FindObjectsByType<Tomb>(FindObjectsSortMode.None))
+            if (data.usedTombs.Contains(IdOf(t.transform))) t.Restore();
 
         dead.Clear();
         dead.UnionWith(data.deadEnemies);
