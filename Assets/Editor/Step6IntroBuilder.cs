@@ -73,11 +73,11 @@ public static class Step6IntroBuilder
         img.preserveAspect = true;
         img.raycastTarget = false;
 
-        var cap = Text(slide.transform, font, "Caption", 38, TextAnchor.MiddleCenter, new Color(0.95f, 0.9f, 0.8f));
+        var cap = MakeText(slide.transform, font, "Caption", 38, TextAnchor.MiddleCenter, new Color(0.95f, 0.9f, 0.8f));
         cap.horizontalOverflow = HorizontalWrapMode.Wrap;
         Anchor(cap.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 150f), new Vector2(1500f, 120f));
 
-        var hint = Text(slide.transform, font, "Hint", 26, TextAnchor.MiddleCenter, new Color(0.65f, 0.65f, 0.65f));
+        var hint = MakeText(slide.transform, font, "Hint", 26, TextAnchor.MiddleCenter, new Color(0.65f, 0.65f, 0.65f));
         Anchor(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 50f), new Vector2(1200f, 50f));
 
         var ui = root.AddComponent<IntroUI>();
@@ -418,7 +418,7 @@ public static class Step6IntroBuilder
 
     // ------------------------------------------------------------ UI-помічники
 
-    private static Text Text(Transform parent, Font font, string name, int size, TextAnchor align, Color c)
+    private static Text MakeText(Transform parent, Font font, string name, int size, TextAnchor align, Color c)
     {
         var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
