@@ -127,7 +127,7 @@ public static class Step5CeilingBuilder
             bool isWall = t.name.StartsWith("wall");
             bool isPillar = t.name.StartsWith("pillar") || t.name.StartsWith("column");
             if (!isWall && !isPillar) continue;
-            if (t.parent != null && (t.parent.name.StartsWith("wall") || t.parent.name.StartsWith("pillar") || t.parent.name.StartsWith("column"))) continue;
+            if (HasPieceAncestor(t)) continue;     // створки дверей, ґрати тощо вкладені в wall*: окремо їх не надбудовуємо
             var rs = t.GetComponentsInChildren<Renderer>();
             if (rs.Length == 0) continue;
             Bounds b = rs[0].bounds;
@@ -259,6 +259,14 @@ public static class Step5CeilingBuilder
             if (top > 1.5f && top < low) low = top;      // відкидаємо пласкі напівстінки
         }
         return low == float.MaxValue ? 4f : low;
+    }
+
+    // Чи є серед предків об'єкт-деталь рівня (wall*, pillar*, column*): тоді це не корінь, а частина стіни
+    private static bool HasPieceAncestor(Transform t)
+    {
+        for (var p = t.parent; p != null; p = p.parent)
+            if (p.name.StartsWith("wall") || p.name.StartsWith("pillar") || p.name.StartsWith("column")) return true;
+        return false;
     }
 
     private static void Wall(Transform parent, Vector3 pos, float yaw)
