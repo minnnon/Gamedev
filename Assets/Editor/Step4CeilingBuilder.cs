@@ -21,7 +21,9 @@ public static class Step4CeilingBuilder
         foreach (var path in Scenes)
         {
             var scene = EditorSceneManager.OpenScene(path);
-            if (GameObject.Find("Ceiling") != null) { Debug.Log($"[Стеля] {scene.name}: вже є."); continue; }
+            var oldCeiling = GameObject.Find("Ceiling");
+            if (oldCeiling != null && oldCeiling.transform.childCount > 0) { Debug.Log($"[Стеля] {scene.name}: вже є."); continue; }
+            if (oldCeiling != null) Object.DestroyImmediate(oldCeiling);     // порожній після невдалого запуску
             var env = GameObject.Find("Environment");
             if (env == null) { Debug.LogWarning($"[Стеля] {scene.name}: немає Environment."); continue; }
 
@@ -30,11 +32,15 @@ public static class Step4CeilingBuilder
             Undo.RegisterCreatedObjectUndo(root, "Ceiling");
 
             int n = 0;
-            foreach (var r in env.GetComponentsInChildren<MeshRenderer>())
+            foreach (var t in env.GetComponentsInChildren<Transform>())
             {
-                if (!r.gameObject.name.StartsWith("floor")) continue;
-                // Беремо весь префаб підлоги (плитка складається з одного меша; на всякий випадок ловимо верхній об'єкт)
-                Bounds b = r.bounds;
+                if (!t.name.StartsWith("floor")) continue;
+                if (t.parent != null && t.parent.name.StartsWith("floor")) continue;    // лише корінь префаба
+                var rs = t.GetComponentsInChildren<Renderer>();
+                if (rs.Length == 0) continue;
+                Bounds b = rs[0].bounds;
+                foreach (var r in rs) b.Encapsulate(r.bounds);
+
                 var tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 tile.name = "CeilingTile";
                 tile.transform.SetParent(root.transform, false);
@@ -69,29 +75,43 @@ public static class Step4CeilingBuilder
         }
     }
 
-    // Висота верху стін: найвищий об'єкт з іменем wall* (стовпи не рахуємо)
+    // Висота верху стін: медіана по кореневих об'єктах wall* (стовпи й арки не спотворюють результат)
     private static float WallTop(Transform env)
     {
-        float top = 0f;
-        foreach (var r in env.GetComponentsInChildren<MeshRenderer>())
-            if (r.gameObject.name.StartsWith("wall") && r.bounds.max.y > top) top = r.bounds.max.y;
-        return top > 1f ? top : 4f;
+        var tops = new System.Collections.Generic.List<float>();
+        foreach (var t in env.GetComponentsInChildren<Transform>())
+        {
+            if (!t.name.StartsWith("wall")) continue;
+            if (t.parent != null && t.parent.name.StartsWith("wall")) continue;
+            var rs = t.GetComponentsInChildren<Renderer>();
+            if (rs.Length == 0) continue;
+            float top = rs[0].bounds.max.y;
+            foreach (var r in rs) top = Mathf.Max(top, r.bounds.max.y);
+            tops.Add(top);
+        }
+        if (tops.Count == 0) return 4f;
+        tops.Sort();
+        return tops[tops.Count / 2];
     }
 
-    // Відкритий прохід (wall_open_scaffold) на південній стіні зали A стає ґратами wall_gated
+    // Прохід до сходів (будь-яка стіна на x=0, z=-2 у залі A) стає ґратами wall_gated — лише якщо сходи є
     private static void SwapStairsGate()
     {
+        if (GameObject.Find("Stairs_Up") == null) { Debug.Log("[Стеля] Сходів позаду старту немає — ґрати не потрібні."); return; }
         var hallA = GameObject.Find("Hall_A");
-        var walls = hallA != null ? hallA.transform.Find("Walls") : null;
-        if (walls == null) return;
-        var open = walls.Cast<Transform>().FirstOrDefault(t => t.name.StartsWith("wall_open_scaffold")
-            && Mathf.Abs(t.position.x) < 0.1f && Mathf.Abs(t.position.z + 2f) < 0.1f);
         var src = AssetDatabase.LoadAssetAtPath<GameObject>(Proj + "/Prefabs/Level/wall_gated.prefab");
-        if (open == null || src == null) { Debug.LogWarning("[Стеля] Не знайдено прохід до сходів або wall_gated."); return; }
+        if (hallA == null || src == null) { Debug.LogWarning("[Стеля] Немає Hall_A або wall_gated."); return; }
 
-        Vector3 pos = open.position; Quaternion rot = open.rotation;
-        Object.DestroyImmediate(open.gameObject);
-        var gate = (GameObject)PrefabUtility.InstantiatePrefab(src, walls);
+        var wall = hallA.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name.StartsWith("wall")
+            && !(t.parent != null && t.parent.name.StartsWith("wall"))
+            && Mathf.Abs(t.position.x) < 0.1f && Mathf.Abs(t.position.z + 2f) < 0.1f);
+        if (wall == null) { Debug.LogWarning("[Стеля] Не знайдено стіну на вході в сходи (0, -2)."); return; }
+        if (wall.name.StartsWith("wall_gated")) { Debug.Log("[Стеля] Ґрати вже стоять."); return; }
+
+        Transform parent = wall.parent;
+        Vector3 pos = wall.position; Quaternion rot = wall.rotation;
+        Object.DestroyImmediate(wall.gameObject);
+        var gate = (GameObject)PrefabUtility.InstantiatePrefab(src, parent);
         gate.transform.SetPositionAndRotation(pos, rot);
         Debug.Log("[Стеля] Прохід до сходів у Depths закрито ґратами.");
     }
